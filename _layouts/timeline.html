@@ -4,17 +4,16 @@ layout: page
 custom-foot: js/timeline-js.html
 ---
 {%- if site.data.theme.icons -%}{% assign icons = site.data.theme.icons %}{% else %}
-{% assign cb_icons = site.pages | where: "name","cb-icons.svg" | first %}
-{% assign icons = cb_icons.icons %}{%- endif -%}
+{%- assign cb_icons = site.pages | where: "name","cb-icons.svg" | first | default: {} -%} 
+{%- assign icons = cb_icons.icons | default: {} -%}
 {%- assign field = site.data.theme.timeline-field | default: page.timeline-field | default: "date" -%}
 {% if site.data.theme.timeline-child-objects == true %}
 {%- assign items = site.data[site.metadata] | where_exp: 'item','item.objectid' -%}
 {% else %}
 {%- assign items = site.data[site.metadata] | where_exp: 'item','item.objectid' | where_exp: 'item','item.parentid == nil' -%}
 {% endif %}
-{%- assign items = items | where_exp: 'item','item[field]' | sort: field -%}
-{%- assign raw-dates = items | map: field | compact | uniq -%}
-{%- capture clean-years -%}{% for date in raw-dates %}{% if date contains "-" %}{{ date | strip | split: "-" | first }}{% elsif date contains "/" %}{{ date | strip | split: "/" | last }}{% else %}{{ date | strip }}{% endif %}{% unless forloop.last %};{% endunless %}{%- endfor -%}{%- endcapture -%}
+{%- assign items = items | where_exp: 'item','item[field]' -%} {%- assign items = items | default: [] -%} {%- if items and items.size > 0 -%} {%- assign items = items | sort: field -%} {%- endif -%}
+{%- assign raw-dates = items | default: [] | map: field | compact | uniq -%} {%- capture clean-years -%}{% for date in raw-dates %}{% if date contains "-" %}{{ date | strip | split: "-" | first }}{% elsif date contains "/" %}{{ date | strip | split: "/" | last }}{% else %}{{ date | strip }}{% endif %}{% unless forloop.last %};{% endunless %}{%- endfor -%}{%- endcapture -%}
 {%- assign uniqueYears = clean-years | replace: ";;",";" | split: ";" | compact | uniq | sort -%}
 {%- if site.data.theme.year-navigation -%}
 {%- assign navYears = site.data.theme.year-navigation | split: ";" -%}
@@ -52,8 +51,8 @@ custom-foot: js/timeline-js.html
                     {%- assign inYear = items | where_exp: 'item', 'item[field] contains year' -%}
                     {% for item in inYear %}
                     <div class="col-lg-4 col-md-6">
-                        <a href="{% if item.parentid == nil %}{{ '/item.html' | relative_url | append: '?id=' | append: item.objectid }}{% elsif item.parentid %}{{ '/item.html' | relative_url | append: '?id=' | append: item.parentid | relative_url }}#{{ item.objectid }}{% endif %}" >
-                            {% if item.format contains 'image' or item.youtubeid %}
+                        <a href="{% if item.parentid == nil %}{{ '/item.html' | relative_url | append: '?id=' | append: item.objectid }}{% elsif item.parentid %}{{ '/item.html' | relative_url | append: '?id=' | append: item.parentid }}#{{ item.objectid }}{% endif %}" >
+                            data-src="{% if item.youtubeid %}https://img.youtube.com/vi/{{ item.youtubeid }}/hqdefault.jpg{% elsif item.filename contains '/' %}{{ item.filename }}{% else %}{{ item.filename | prepend: '/objects/' | relative_url }}{% endif %}"
                             <img class="lazyload img-thumbnail timeline-thumb" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'%3E%3C/svg%3E" data-src="{% if item.youtubeid %}{{ 'https://img.youtube.com/vi/' | append: item.youtubeid | append: '/hqdefault.jpg' | relative_url }}{% elsif item.filename contains '/' %}{{ item.filename }}{% else %}{{ item.filename | prepend: '/objects/' | relative_url }}{% endif %}" alt="{{ item.title | escape }}" data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ item.title | escape }} | {{ item.date | escape }}">
                             {% else %}
                             <div class="card"> 
